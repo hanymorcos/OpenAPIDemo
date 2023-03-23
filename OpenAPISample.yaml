@@ -1,0 +1,281 @@
+openapi: 3.0.2
+info:
+  title: OpenAPI Course
+  description: |
+
+    ![Screenshot of a comment on a GitHub issue showing an image, added in the Markdown, of an Octocat smiling and raising a tentacle.](https://myoctocat.com/assets/images/base-octocat.svg)
+  
+    * Item 1
+    * Item 2
+    * Item 3
+
+    # foo
+    ## foo
+    ### foo
+    #### foo
+    ##### foo
+    ###### foo
+    # foo *bar* \*baz\*
+    
+    - foo
+      - bar
+        - baz
+          - boo
+
+    1. - 2. foo
+
+
+        {"widget": {
+        "debug": "on",
+        "window": {
+            "title": "Sample Konfabulator Widget",
+            "name": "main_window",
+            "width": 500,
+            "height": 500
+        },
+        "image": { 
+            "src": "Images/Sun.png",
+            "name": "sun1",
+            "hOffset": 250,
+            "vOffset": 250,
+            "alignment": "center"
+        },
+        "text": {
+            "data": "Click Here",
+            "size": 36,
+            "style": "bold",
+            "name": "text1",
+            "hOffset": 250,
+            "vOffset": 100,
+            "alignment": "center",
+            "onMouseUp": "sun1.opacity = (sun1.opacity / 100) * 90;"
+        }
+      }}  
+  
+    
+
+  termsOfService: http://example.com/terms/
+  contact:
+    name: Hany Morcos
+    url: https://test.com
+    email: hany@test.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: "1.0"
+servers:
+- url: https://dev.example.com
+  description: Development Server
+- url: https://qa.example.com
+  description: QA Server
+- url: https://prod.example.com
+  description: Production Server
+paths:
+  /v1/customers:
+    get:
+      tags:
+      - Customers
+      summary: List Customers
+      description: | 
+        Get a list of customers in the system
+         
+        * Item 1
+        * Item 2
+        * Item 3
+
+      operationId: listCustomersV1
+      parameters:
+      - $ref: "#/components/parameters/PageNumberParam"
+      - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        200:
+          description: List of Customers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerPagedList'
+    post:
+      tags:
+      - Customers
+      summary: New Customer
+      description: Create a new customer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      responses:
+        201:
+          description: Customer Created
+  /v1/customers/{customerId}:
+    get:
+      tags:
+      - Customers
+      summary: Get Customer By ID
+      description: Get a single **Customer** by its Id value.
+      operationId: getCustomerByIdV1
+      parameters:
+       - $ref: "#/components/parameters/CustomerIdParam"
+      responses:
+        200:
+          description: Found Customer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          links: 
+            deleteCustomerById: 
+              operationId: deleteCustomerById
+              parameters:
+                customerId: "$reponse.body#/id"
+              description: >
+                The `id` value returned in the response can be used as
+                the `customerId` parameter in `Delete /vi/customers/{customerId}`.
+    delete: 
+     tags: 
+     - Customers
+     summary: Delete Customer by ID
+     description: Delete a single _Customer_ by it's UUID value
+     operationId: deleteCustomerById
+     parameters:
+       - $ref: "#/components/parameters/CustomerIdParam"
+     responses:
+       '200':
+          description: Successfully deleted
+  /v1/customers/{customerId}/orders:
+    post:
+      tags:
+      - Order Service
+      description: Place Order
+      parameters:
+      - name: customerId
+        in: path
+        description: Customer Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarOrder'
+        required: false
+      responses:
+        201:
+          description: Order Created
+          headers:
+            Location:
+              description: Reference to created Order
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uri
+        400:
+          description: Bad Reqeust
+        404:
+          description: Not Found
+        409:
+          description: Conflict
+      callbacks:
+        orderStatusChange:
+          ${request.body#/orderStatusCallbackUrl}:
+            description: Webhook for order status change notifications
+            post:
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        orderId:
+                          type: string
+                          format: uuid
+                        orderStatus:
+                          type: string
+              responses:
+                200:
+                  description: Okay
+  /v1/cars:
+    get:
+      tags:
+      - cars
+      summary: List cars
+      description: List all cars in system.
+      operationId: listcarsV1
+      parameters:
+      - $ref: "#/components/parameters/PageNumberParam"
+      - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        200:
+          description: List of cars
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CarPagedList'
+        404:
+          description: No cars Found
+  /v1/cars/{carId}:
+    get:
+      tags:
+      - cars
+      summary: Get car by ID
+      description: Get a single car by its ID value.
+      operationId: getCarByIdV1
+      parameters:
+      - name: carId
+        in: path
+        description: car Id
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: Found car by Id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Car'
+components:
+  schemas:
+    $ref: schemas.yaml
+  parameters:
+    PageNumberParam:
+      name: pageNumber
+      in: query
+      description: Page Number
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: integer
+        format: int32
+        default: 1
+    PageSizeParam:
+      name: pageSize
+      in: query
+      description: Page Size
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: integer
+        format: int32
+        default: 25
+    CustomerIdParam:
+      name: customerId
+      in: path
+      description: Customer Id
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        format: uuid      
